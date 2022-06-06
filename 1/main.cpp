@@ -60,7 +60,7 @@ Edge Graph::BFS(int startVertex, vector<vector<int>> &resMatrix) {
     queue<int> q;
     q.push(startVertex);
     visited[startVertex] = true;
-    parent[startVertex] = -1;
+    parent[startVertex] = UNDEFINED_VALUE;
     while (!q.empty()) {
         int v = q.front();
         q.pop();
@@ -73,7 +73,7 @@ Edge Graph::BFS(int startVertex, vector<vector<int>> &resMatrix) {
                 resMatrix[startVertex][u] = v;
                 visitedEdges[u][v] = true;
                 visitedEdges[v][u] = true;
-            } else if (!visitedEdges[u][v] && !visitedEdges[v][u]) {
+            } else if (parent[u] != v && !visitedEdges[u][v] && !visitedEdges[v][u]) {
                 Edge problem;
                 problem.v1 = v;
                 problem.v2 = u;
@@ -129,21 +129,30 @@ void Graph::esGeodesico() {
         for (int j = 0; j < path2.size(); ++j) {
             cout<<path2[j]<< " ";
         }
+    }else {
+        cout << "1" <<endl;
+        for (int j = 0; j < resMatrix.size(); ++j) {
+            for (int k = 0; k < resMatrix[0].size(); ++k) {
+                int value =  resMatrix[j][k];
+                if (value != UNDEFINED_VALUE) {
+                    cout << resMatrix[j][k] << "  ";
+                }
+            }
+            cout << "" << endl;
+        }
     }
 }
 
 int main() {
-    Graph g(6);
-    g.addEdge(0, 1);
-    g.addEdge(3, 4);
-    g.addEdge(4, 5);
-    g.addEdge(1, 2);
-    g.addEdge(2, 3);
-    g.addEdge(0, 5);
-
+    Graph g(10);
+    g.addEdge(5,8);
+    g.addEdge(4,3);
+    g.addEdge(3,8);
+    g.addEdge(8,2);
+    g.addEdge(8,9);
+    g.addEdge(5,9);
 
     g.esGeodesico();
-//    g.BFS(2);
 
     return 0;
 }
