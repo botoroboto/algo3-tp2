@@ -19,6 +19,7 @@ class Graph {
     int numVertices = 0;
     vector<vector<int>> adjList;
     vector<bool> visited;
+    vector<vector<bool>> visitedEdges;
     vector<int> d;
     vector<int> parent;
 
@@ -35,12 +36,14 @@ Graph::Graph(int vertices) {
     adjList.resize(numVertices);
     visited.resize(numVertices, false);
     parent.resize(numVertices);
+    visitedEdges.resize(numVertices, vector<bool>(numVertices, false));
 }
 
 void Graph::clear() {
     vector<bool> v(numVertices, false);
     vector<int> distance(numVertices);
     vector<int> p(numVertices);
+    visitedEdges.resize(numVertices, vector<bool>(numVertices, false));
     visited = v;
     d = distance;
     parent = p;
@@ -68,7 +71,9 @@ Edge Graph::BFS(int startVertex, vector<vector<int>> &resMatrix) {
                 d[u] = d[v] + 1;
                 parent[u] = v;
                 resMatrix[startVertex][u] = v;
-            } else if (parent[u] != v && parent[u] != UNDEFINED_VALUE) {
+                visitedEdges[u][v] = true;
+                visitedEdges[v][u] = true;
+            } else if (!visitedEdges[u][v] && !visitedEdges[v][u]) {
                 Edge problem;
                 problem.v1 = v;
                 problem.v2 = u;
@@ -98,41 +103,44 @@ void Graph::esGeodesico() {
     if (!(lastEdge == EDGE_NO_MULTIPLE_PATHS)) {
         int lastVertexPath1 = lastEdge.v2;
         int lastVertexPath2 = lastEdge.v1;
-        int source = i-1;
+        int source = i - 1;
         vector<int> path1;
         vector<int> path2;
         path2.push_back(lastVertexPath1);
 
-        while(lastVertexPath1 != source) {   // reconstruye un camino
+        while (lastVertexPath1 != source) {   // reconstruye un camino
             path1.push_back(lastVertexPath1);
-            lastVertexPath1 = resMatrix[i-1][lastVertexPath1];
+            lastVertexPath1 = resMatrix[i - 1][lastVertexPath1];
         }
 
-        while(lastVertexPath2 != source) {   // reconstruye el otro camino
+        while (lastVertexPath2 != source) {   // reconstruye el otro camino
             path2.push_back(lastVertexPath2);
-            lastVertexPath2 = resMatrix[i-1][lastVertexPath2];
+            lastVertexPath2 = resMatrix[i - 1][lastVertexPath2];
         }
 
         path1.push_back(source);
         path2.push_back(source);
 
         for (int j = 0; j < path1.size(); ++j) {
-            cout<<path1[j]<<endl;
+            cout << path1[j] << " ";
         }
+        cout<<"----"<<endl;
 
         for (int j = 0; j < path2.size(); ++j) {
-            cout<<path2[j]<<endl;
+            cout<<path2[j]<< " ";
         }
     }
 }
 
 int main() {
-    Graph g(4);
+    Graph g(6);
     g.addEdge(0, 1);
-    g.addEdge(0, 2);
+    g.addEdge(3, 4);
+    g.addEdge(4, 5);
     g.addEdge(1, 2);
     g.addEdge(2, 3);
-    g.addEdge(3, 3);
+    g.addEdge(0, 5);
+
 
     g.esGeodesico();
 //    g.BFS(2);
