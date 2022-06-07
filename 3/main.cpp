@@ -157,7 +157,7 @@ void johnson(struct Grafo* grafo, vector<vector<int>>& D, vector<int>& ciclo) {
 
         G1->aristas.push_back(*e);
 
-        //delete(e);
+        delete(e);
     }
     vector<int> h;
     BellmanFord(G1, V, h, ciclo);
@@ -222,56 +222,28 @@ void johnson(struct Grafo* grafo, vector<vector<int>>& D, vector<int>& ciclo) {
 
 int main() {
 
-   /* int V = 2;
-    int E = 2;
+    cin >> N >> M;
 
-    struct Grafo* G = createGraph(V, E);
+    int origen, destino, peso;
 
-    Arista e1,e2;
-    e1.u = 0;
-    e1.v = 1;
-    e1.w = 1;
+    Grafo* G = createGraph(N,M);
 
-    e2.u = 1;
-    e2.v = 0;
-    e2.w = -2;
+    for(int i = 0; i < M; i++){
 
-    G->aristas.push_back(e1);
-    G->aristas.push_back(e2);
-*/
-    int V = 4;
-    int E = 5;
+        cin >> origen >> destino >> peso;
 
-    struct Grafo* G = createGraph(V, E);
+        struct Arista* e = new Arista;
+        e->u = origen;
+        e->v = destino;
+        e->w = peso;
 
-    Arista e1,e2,e3,e4,e5;
-    e1.u = 0;
-    e1.v = 1;
-    e1.w = 3;
+        G->aristas.push_back(*e);
 
-    e2.u = 1;
-    e2.v = 2;
-    e2.w = 2;
+        delete(e);
 
-    e3.u = 2;
-    e3.v = 3;
-    e3.w = 6;
+    }
 
-    e4.u = 3;
-    e4.v = 0;
-    e4.w = -1;
-
-    e5.u = 1;
-    e5.v = 3;
-    e5.w = -1;
-
-    G->aristas.push_back(e1);
-    G->aristas.push_back(e2);
-    G->aristas.push_back(e3);
-    G->aristas.push_back(e4);
-    G->aristas.push_back(e5);
-
-    vector<vector<int> > distancias(V, vector<int> (V));
+    vector<vector<int> > distancias(N, vector<int> (N));
     vector<int> cicloNeg;
     johnson(G,distancias, cicloNeg);
 
