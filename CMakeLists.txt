@@ -5,7 +5,11 @@ include(CTest)
 enable_testing()
 
 add_executable(ejercicio3 ./3/main.cpp)
+
+add_executable(ejercicio2 ./2/main.cpp)
+
 add_executable(ejercicio1 ./1/main.cpp)
+
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
