@@ -5,18 +5,18 @@
 
 using namespace std;
 class Graph {
-    int numVertices = 0;
+    int vertexQuantity = 0;
     vector<vector<int>> adjList;
 
 public:
-    Graph(int vertices);
+    Graph(int vertex);
     void addEdge(int src, int dest);
-    vector<vector<int>> devolverAristas();
+    vector<vector<int>> returnEdges();
 };
 
-Graph::Graph(int vertices) {
-    numVertices = vertices;
-    adjList.resize(vertices);
+Graph::Graph(int vertex) {
+    vertexQuantity = vertex;
+    adjList.resize(vertex);
 }
 
 void Graph::addEdge(int src, int dest) {
@@ -24,7 +24,7 @@ void Graph::addEdge(int src, int dest) {
     adjList[dest].push_back(src);
 }
 
-vector<vector<int>> Graph::devolverAristas(){
+vector<vector<int>> Graph::returnEdges(){
     return adjList;
 }
 
@@ -97,65 +97,61 @@ int main() {
 
     int M, N;
     cin >> M >> N;
-    vector<vector<int>> entrada(M, vector<int>());
+    vector<vector<pair<int, int>>> input(M, vector<pair<int, int>>());
     string line;
-
+    pair<int,int> p;
+    // Esto permite diferenciarlo e identificarlo.
+    int vertexId = 0;
     for (int i = -1; i < M; ++i) {
         getline(cin, line);
         std::istringstream iss(line);
         string s;
         while(getline(iss, s, ' ')){
-            entrada[i].push_back(stoi(s));
-        }
-
-    }
-
-     vector<vector<pair<int, int>>> entradaModificada(entrada.size(),
-                                                      vector<pair<int, int>>(entrada[0].size(), make_pair(0, -1)));
-    int totalVertices = 0;
-    //esto sirve para identificar univocamente al vertice y no agregar sus aristas repetidas veces.
-    int vertice = 0;
-    for (int i = 0; i < entrada.size(); ++i) {
-        for (int j = 0; j < entrada[0].size(); ++j) {
-            if(entrada[i][j]==1){
-                totalVertices += entrada[i][j];
-                entradaModificada[i][j].first= entrada[i][j];
-                entradaModificada[i][j].second = vertice;
-                vertice++;
+            if(stoi(s)==1){
+                p = make_pair(stoi(s), vertexId);
+                input[i].push_back(p);
+                vertexId++;
+            }else{
+                p = make_pair(stoi(s), -1);
+                input[i].push_back(p);
             }
+
         }
+
     }
+    int totalVertex = vertexId;
 
-    DisjointSet ds(totalVertices);
-
-    Graph g = Graph(totalVertices);
-
-    for (int i = 0; i < entradaModificada.size(); ++i) {
-        for (int j = 0; j < entradaModificada[0].size(); ++j) {
-            if(entradaModificada[i][j].first==1){
-                int vertice = entradaModificada[i][j].second;
-                if(j+1 < entradaModificada[0].size() && entradaModificada[i][j+1].first == 1){
-                    g.addEdge(vertice, entradaModificada[i][j+1].second);
-                }
-                if( i+1 < entradaModificada.size() && entradaModificada[i+1][j].first == 1){
-                    g.addEdge(vertice, entradaModificada[i+1][j].second);
-                }
-                if(j-1 >=0 && entradaModificada[i][j-1].first == 1){
-                    g.addEdge(vertice, entradaModificada[i][j-1].second);
-                }
-                if( i-1 >=0 && entradaModificada[i-1][j].first == 1){
-                    g.addEdge(vertice, entradaModificada[i-1][j].second);
-                }
-            }
-        }
-    }
+    DisjointSet ds(totalVertex);
     ds.makeSet();
 
-    for (int i = 0; i < g.devolverAristas().size(); ++i) {
-        for (int j = 0; j < g.devolverAristas()[i].size(); ++j) {
+    Graph g = Graph(totalVertex);
 
-            if(ds.findSet(i) != ds.findSet(g.devolverAristas()[i][j])){
-                ds.UnionByRank(i, g.devolverAristas()[i][j]);
+    for (int i = 0; i < input.size(); ++i) {
+        for (int j = 0; j < input[0].size(); ++j) {
+            if(input[i][j].first==1){
+                int vertex = input[i][j].second;
+                if(j+1 < input[0].size() && input[i][j+1].first == 1){
+                    g.addEdge(vertex, input[i][j+1].second);
+                }
+                if( i+1 < input.size() && input[i+1][j].first == 1){
+                    g.addEdge(vertex, input[i+1][j].second);
+                }
+                if(j-1 >=0 && input[i][j-1].first == 1){
+                    g.addEdge(vertex, input[i][j-1].second);
+                }
+                if( i-1 >=0 && input[i-1][j].first == 1){
+                    g.addEdge(vertex, input[i-1][j].second);
+                }
+            }
+        }
+    }
+
+
+    for (int i = 0; i < g.returnEdges().size(); ++i) {
+        for (int j = 0; j < g.returnEdges()[i].size(); ++j) {
+
+            if(ds.findSet(i) != ds.findSet(g.returnEdges()[i][j])){
+                ds.UnionByRank(i, g.returnEdges()[i][j]);
             }
         }
     }
