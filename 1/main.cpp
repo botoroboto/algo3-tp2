@@ -148,16 +148,24 @@ void Graph::esGeodesico() {
 }
 
 int main() {
-    Graph g(10);
-    g.addEdge(5,8);
-    g.addEdge(4,3);
-    g.addEdge(3,8);
-    g.addEdge(8,2);
-    g.addEdge(8,9);
-    g.addEdge(5,9);
-    g.addEdge(9,7);
 
-    g.esGeodesico();
+    int N,M;
+
+    cin >> N >> M;
+
+    int origen, destino;
+
+    Graph G(N);
+
+    for(int i = 0; i < M; i++){
+
+        cin >> origen >> destino;
+
+        G.addEdge(origen,destino);
+
+    }
+
+    G.esGeodesico();
 
     return 0;
 }
