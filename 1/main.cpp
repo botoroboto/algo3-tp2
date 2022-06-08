@@ -54,7 +54,7 @@ void Graph::addEdge(int src, int dest) {
     adjList[dest].push_back(src);
 }
 
-// BFS modificado, devuelve -1 si salió bien y sino devuelve el vertice que genera conflicto y al cual podemos encontrar 2 caminos desde startVertex
+// BFS modificado, devuelve EDGE_NO_MULTIPLE_PATHS si salió bien y sino devuelve el vértice que genera conflicto y al cual podemos encontrar 2 caminos desde startVertex mínimos
 Edge Graph::BFS(int startVertex, vector<vector<int>> &resMatrix) {
     this->clear();
     queue<int> q;
@@ -70,10 +70,14 @@ Edge Graph::BFS(int startVertex, vector<vector<int>> &resMatrix) {
                 q.push(u);
                 d[u] = d[v] + 1;
                 parent[u] = v;
-                resMatrix[startVertex][u] = v;
-                visitedEdges[u][v] = true;
-                visitedEdges[v][u] = true;
-            } else if (parent[u] != v && !visitedEdges[u][v] && !visitedEdges[v][u]) {
+                resMatrix[startVertex][u] = v; // O(1)
+                visitedEdges[u][v] = true;  // O(1)
+                visitedEdges[v][u] = true;   // O(1)
+            } else if (
+                    !visitedEdges[u][v] &&   // verifica que no se pase por la misma arista para que no se produzcan ciclos
+                    !visitedEdges[v][u] &&   // verifica que no se pase por la misma arista para que no se produzcan ciclos
+                    d[v] + 1 == d[u]  // ambos son caminos mínimos
+            ) {
                 Edge problem;
                 problem.v1 = v;
                 problem.v2 = u;
@@ -96,7 +100,7 @@ void Graph::esGeodesico() {
     Edge lastEdge = EDGE_NO_MULTIPLE_PATHS;
     int i=0;
     while (i < numVertices && lastEdge==EDGE_NO_MULTIPLE_PATHS) {   // esto cuesta O(n)
-        lastEdge = BFS(i, resMatrix);   // esto cuesta O(n + m)
+        lastEdge = BFS(i, resMatrix);   // esto cuesta O(n + m) ya que es BFS y lo que se agrega aporta O(1) que son las comparaciones en el else que se fija si un nodo ya fue visitado
         i++;
     }
 
@@ -151,6 +155,7 @@ int main() {
     g.addEdge(8,2);
     g.addEdge(8,9);
     g.addEdge(5,9);
+    g.addEdge(9,7);
 
     g.esGeodesico();
 
