@@ -121,9 +121,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
         }
     }
 
-    cout << "---------------------" << endl;
-
-
     //aristas tipo c
     int flag;
     for(int i=0;i < noProperlyContained.size();i++){
@@ -150,7 +147,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
                     dummy.length=0;
                     continue;
                 }
-                cout << "["<< noProperlyContained[i].a << "," << noProperlyContained[i].b << "]" << "->" << "["<< noProperlyContained[toAdd].a << "," << noProperlyContained[toAdd].b << "]" << "link C" << endl;
 
                 cdtGraph.adjacents[i].push_back(dummy);
             }
@@ -173,8 +169,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
 
         cdtGraph_inout.adjacents.push_back(emptyList);
         cdtGraph_inout.adjacents.push_back(emptyList);
-
-        cout << "[" << 2*i<< ","<< dummy.vertex << "] TYPE Identity" << endl;
 
         cdtGraph_inout.adjacents[2*i].push_back(dummy);
     }
@@ -199,8 +193,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
                 l.length = it->length;
                 l.type = it->type;
 
-                cout << "[" << 2*i<< ","<< it->vertex << "] TYPE b" << endl;
-
                 cdtGraph_inout.adjacents[2*i].push_back(l); // iOut -> jIn
             }
 
@@ -211,21 +203,14 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
                 l.length = it->length;
                 l.type = it->type;
 
-                cout << "[" << it->vertex << ","<< 2*i - 1 << "] TYPE C" << endl;
-
                 cdtGraph_inout.adjacents[2*(it->vertex)].push_back(l); // JOut -> iIn
             }
         }
     }
 
-    cout << "---------------------" << endl;
-    cout << "---------------------" << endl;
-
     for (int j = 0; j < cdtGraph_inout.adjacents.size(); j+=1) {
         for (std::list<link>::iterator it = cdtGraph_inout.adjacents[j].begin(); it != cdtGraph_inout.adjacents[j].end(); ++it) {
-            cout << "---------------------" << endl;
             cout << j << " "<< it->vertex << endl;
-            cout << it->type <<"["<< noProperlyContained[j / 2].a << "," << noProperlyContained[j / 2].b << "]" << "->" << "["<< noProperlyContained[it->vertex / 2].a << "," << noProperlyContained[it->vertex / 2].b << "]" << "Inout" << endl;
         }
     }
 
@@ -299,11 +284,6 @@ int main() {
     vector<interval> result = cdt(I);
 
     cout << result.size() << endl;
-    for(interval i : result){
-        cout << i.a << " a" << endl;
-        cout << i.b << " b"<< endl;
-        cout << i.realIndex << " real index "<< endl;
-    }
     cout << endl;
 
     return 0;
