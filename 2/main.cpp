@@ -47,7 +47,6 @@ public:
     {
         for (int i = 0; i < n; i++) {
             parent[i] = i;
-            this->numberOfSets = this->numberOfSets + 1;
         }
     }
 
@@ -105,8 +104,8 @@ int main() {
     pair<int,int> p;
     // Esto permite diferenciarlo e identificarlo.
     int vertexId = 0;
-    int indice = -1;
     int previos = 0;
+    //  int componentes_previas = 0 ;
     for (int i = -1; i < M; ++i) {
         getline(cin, line);
         std::istringstream iss(line);
@@ -132,24 +131,17 @@ int main() {
         for (int j = 0; j < input[0].size(); ++j) {
             if(input[1][j].first==1){
                 int vertex = input[1][j].second;
-                /*
-                if(j+1 < input[0].size() && input[i][j+1].first == 1){
-                    g.addEdge(vertex, input[i][j+1].second);
-                }
-                if( i+1 < input.size() && input[i+1][j].first == 1){
-                    g.addEdge(vertex, input[i+1][j].second);
-                }
-                 */
                 if(j-1 >=0 && input[1][j-1].first == 1){
                     g.addEdge(vertex, input[1][j-1].second);
                 }
-                if(input[0][j].first == 1){
+                if(input[0][j].first == 1) {
                     // Aca se conecta con los anteriores, habria que contar cuantos se conectan.
                     //g.addEdge(vertex, input[0][j].second);
-                    previos++;
-                    if( j-1 < 0 || (j-1 >=0 && input[1][j-1].first == 0)) {
+                    previos ++;
+                    /*if (j - 1 < 0 || (j - 1 >= 0 && input[1][j - 1].first == 0)) {
                         previos++;
                     }
+                     */
                 }
             }
             //   }
@@ -163,42 +155,22 @@ int main() {
         }
         //Aca ya estan los ranks para la pasada actual.
         int sets = ds.returnSets();
-        //int restar = sets == previos? previos : 0;
-        int restar = sets - previos;
-        connected = restar+connected;
-        //previos = sets;
+        //int restar = componentes_previas - sets ;
+        //  if(restar>0){
+        if(connected + sets - previos > 0){
+            connected = connected + sets - previos;
+        }else{
+            connected = connected;
+        }
+        //      connected = connected + sets - previos;
+        //   }else {
+        //      connected = connected + sets;
+        //  }
         input[0].swap(input[1]);
+        //componentes_previas = sets;
         vertexId = 0;
         input[1].erase(input[1].begin(), input[1].end());
-        /*
-        for (int j = 0; j < input[0].size(); ++j) {
-            if(input[0][j].first==1){
-                input[0][j].second = vertexId;
-                ++vertexId;
-            }
-        }*/
 
-        //input.pop_back();
-
-        /*
-        for (int j = 0; j < input[1].size(); ++j) {
-            p = make_pair(stoi(s), vertexId);
-            input[1].push_back(p);
-            vertexId++;
-    }*/
-        /*else{
-            if(indice >= 2){
-                int totalVertex = 5;
-                DisjointSet ds(totalVertex);
-                ds.makeSet();
-
-                Graph g = Graph(totalVertex);
-
-
-            }
-
-        }            */
-        ++indice;
     }
     cout << connected << endl;
     return 0;
