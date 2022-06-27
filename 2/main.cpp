@@ -47,6 +47,7 @@ public:
     {
         for (int i = 0; i < n; i++) {
             parent[i] = i;
+            this->numberOfSets = this->numberOfSets + 1;
         }
     }
 
@@ -80,7 +81,7 @@ public:
         else if (rank[xset] > rank[yset]) {
             parent[yset] = xset;
         }
-        // Si tienen el mismo rank, se debera aumentar
+            // Si tienen el mismo rank, se debera aumentar
         else {
             parent[yset] = xset;
             rank[xset] = rank[xset] + 1;
@@ -97,65 +98,108 @@ int main() {
 
     int M, N;
     cin >> M >> N;
-    vector<vector<pair<int, int>>> input(M, vector<pair<int, int>>());
+    vector<vector<pair<int, int>>> input(2, vector<pair<int, int>>(N, make_pair(0, -1)));
+
+    int connected = 0;
     string line;
     pair<int,int> p;
     // Esto permite diferenciarlo e identificarlo.
     int vertexId = 0;
+    int indice = -1;
+    int previos = 0;
     for (int i = -1; i < M; ++i) {
         getline(cin, line);
         std::istringstream iss(line);
         string s;
-        while(getline(iss, s, ' ')){
-            if(stoi(s)==1){
+        while (getline(iss, s, ' ')) {
+            if (stoi(s) == 1) {
                 p = make_pair(stoi(s), vertexId);
-                input[i].push_back(p);
+                input[1].push_back(p);
                 vertexId++;
-            }else{
+            } else {
                 p = make_pair(stoi(s), -1);
-                input[i].push_back(p);
+                input[1].push_back(p);
             }
 
         }
+        int totalVertex = vertexId;
+        DisjointSet ds(totalVertex);
+        ds.makeSet();
 
-    }
-    int totalVertex = vertexId;
-
-    DisjointSet ds(totalVertex);
-    ds.makeSet();
-
-    Graph g = Graph(totalVertex);
-
-    for (int i = 0; i < input.size(); ++i) {
+        Graph g = Graph(totalVertex);
+        //for (int i = 0; i < input.size(); ++i) {
+        int previos = 0;
         for (int j = 0; j < input[0].size(); ++j) {
-            if(input[i][j].first==1){
-                int vertex = input[i][j].second;
+            if(input[1][j].first==1){
+                int vertex = input[1][j].second;
+                /*
                 if(j+1 < input[0].size() && input[i][j+1].first == 1){
                     g.addEdge(vertex, input[i][j+1].second);
                 }
                 if( i+1 < input.size() && input[i+1][j].first == 1){
                     g.addEdge(vertex, input[i+1][j].second);
                 }
-                if(j-1 >=0 && input[i][j-1].first == 1){
-                    g.addEdge(vertex, input[i][j-1].second);
+                 */
+                if(j-1 >=0 && input[1][j-1].first == 1){
+                    g.addEdge(vertex, input[1][j-1].second);
                 }
-                if( i-1 >=0 && input[i-1][j].first == 1){
-                    g.addEdge(vertex, input[i-1][j].second);
+                if(input[0][j].first == 1){
+                    // Aca se conecta con los anteriores, habria que contar cuantos se conectan.
+                    //g.addEdge(vertex, input[0][j].second);
+                    previos++;
+                    if( j-1 < 0 || (j-1 >=0 && input[1][j-1].first == 0)) {
+                        previos++;
+                    }
+                }
+            }
+            //   }
+        }
+        for (int i = 0; i < g.returnEdges().size(); ++i) {
+            for (int j = 0; j < g.returnEdges()[i].size(); ++j) {
+                if(ds.findSet(i) != ds.findSet(g.returnEdges()[i][j])){
+                    ds.UnionByRank(i, g.returnEdges()[i][j]);
                 }
             }
         }
-    }
-
-
-    for (int i = 0; i < g.returnEdges().size(); ++i) {
-        for (int j = 0; j < g.returnEdges()[i].size(); ++j) {
-
-            if(ds.findSet(i) != ds.findSet(g.returnEdges()[i][j])){
-                ds.UnionByRank(i, g.returnEdges()[i][j]);
+        //Aca ya estan los ranks para la pasada actual.
+        int sets = ds.returnSets();
+        //int restar = sets == previos? previos : 0;
+        int restar = sets - previos;
+        connected = restar+connected;
+        //previos = sets;
+        input[0].swap(input[1]);
+        vertexId = 0;
+        input[1].erase(input[1].begin(), input[1].end());
+        /*
+        for (int j = 0; j < input[0].size(); ++j) {
+            if(input[0][j].first==1){
+                input[0][j].second = vertexId;
+                ++vertexId;
             }
-        }
-    }
-    cout << ds.returnSets() << endl;
+        }*/
 
+        //input.pop_back();
+
+        /*
+        for (int j = 0; j < input[1].size(); ++j) {
+            p = make_pair(stoi(s), vertexId);
+            input[1].push_back(p);
+            vertexId++;
+    }*/
+        /*else{
+            if(indice >= 2){
+                int totalVertex = 5;
+                DisjointSet ds(totalVertex);
+                ds.makeSet();
+
+                Graph g = Graph(totalVertex);
+
+
+            }
+
+        }            */
+        ++indice;
+    }
+    cout << connected << endl;
     return 0;
 }
