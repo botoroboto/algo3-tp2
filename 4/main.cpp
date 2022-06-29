@@ -97,86 +97,145 @@ vector<interval> removeContainedIntervals(vector<interval> &I){
     return retval;
 }
 
-graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
+graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
     graph cdtGraph;
 
     //fill the graph with vertex
     list<link> emptyList;
-    for(int i=0;i<noProperlyContained.size();i++){
-        cdtGraph.adjacents.push_back(emptyList); //add vertex of the noProperlyContained interval
+    for(int i=0;i<noContained.size();i++){
+        cdtGraph.adjacents.push_back(emptyList); //add vertex of the noContained interval
     }
 
     // aristas tipo B
-    for (int i = 0; i < noProperlyContained.size(); ++i) {
-        for (int j = i; j < noProperlyContained.size() ; ++j) {
+    for (int i = 0; i < noContained.size(); ++i) {
+        for (int j = i; j < noContained.size() ; ++j) {
             if(
-            j!=i && noProperlyContained[i].a < noProperlyContained[j].a &&
-                noProperlyContained[i].b > noProperlyContained[j].a &&
-                noProperlyContained[i].b < noProperlyContained[j].b
+            j!=i && noContained[i].a < noContained[j].a &&
+                noContained[i].b > noContained[j].a &&
+                noContained[i].b < noContained[j].b
             ) {
                 link dummy;
                 dummy.vertex = j;
                 dummy.length= 1;
                 dummy.type= TYPE_B;
-                // cout << " " << " ["<< noProperlyContained[i].a << "," <<noProperlyContained[i].b << "]" << " ["<< noProperlyContained[j].a << "," << noProperlyContained[j].b << "]"<< endl;
+                // cout << " " << " ["<< noContained[i].a << "," <<noContained[i].b << "]" << " ["<< noContained[j].a << "," << noContained[j].b << "]"<< endl;
 
                 cdtGraph.adjacents[i].push_back(dummy);
             }
         }
     }
 
+    interval emptyInterval;
+    emptyInterval.a = -1000;
+    vector<interval> buckets(2*n +2, emptyInterval);
+    vector<interval> buckets_fin(2*n +2, emptyInterval);
+
+    buckets_fin[0] = noContained[0];
+    buckets_fin[0].realIndex = 0;
+    buckets[0] = noContained[0];
+    buckets[0].realIndex = 0;
+
+    for (int i = 1; i < noContained.size() - 1; ++i) {
+        buckets_fin[noContained[i].b + 1] = noContained[i];
+        buckets_fin[noContained[i].b +1].realIndex = i;
+
+        buckets[noContained[i].a + 1] = noContained[i];
+        buckets[noContained[i].a + 1].realIndex = i;
+    }
+
+    buckets_fin[buckets_fin.size() - 1] = noContained[noContained.size() -1];
+    buckets_fin[buckets_fin.size() - 1].realIndex = noContained.size()-1;
+    buckets[buckets_fin.size() - 1] = noContained[noContained.size()-1];
+    buckets[buckets_fin.size() - 1].realIndex = noContained.size()-1;
+
+    vector<interval> ordenadoPorFin;
+    vector<interval> ordenadoPorInicio;
+
+    for (int i = 0; i < buckets.size(); ++i) {
+        if (buckets[i].a != -1000) {
+            ordenadoPorInicio.push_back(buckets[i]);
+        }
+
+        if (buckets_fin[i].a != -1000) {
+            ordenadoPorFin.push_back(buckets_fin[i]);
+        }
+    }
+
+    for (int i = 0; i < ordenadoPorFin.size(); ++i) {
+        interval candidate = emptyInterval;
+        for (int j = 0; j < ordenadoPorInicio.size(); ++j) {
+            if(ordenadoPorInicio[j].a > ordenadoPorFin[i].b &&
+            ordenadoPorInicio[j].realIndex != ordenadoPorFin[i].realIndex &&
+            candidate.a == -1000
+            ) {
+                candidate = ordenadoPorInicio[j];
+            }
+        }
+
+        if (candidate.a != -1000){
+            link dummy;
+            dummy.vertex = candidate.realIndex;
+            dummy.length = 1;
+            dummy.type = TYPE_C;
+
+            cdtGraph.adjacents[ordenadoPorFin[i].realIndex].push_back(dummy);
+        }
+    }
+
+/*
     //aristas tipo c
     int flag;
-    for(int i=0;i < noProperlyContained.size();i++){
+    for(int i=0;i < noContained.size();i++){
         link dummy;
         dummy.vertex=0;
         dummy.length=1;
         dummy.type=TYPE_C;
-        interval actual = noProperlyContained[i];
+        interval actual = noContained[i];
         int next;
         int toAdd = i;
-        for(int k=0; k < noProperlyContained.size();k++){ // find the next that doesnt overlap with the i interval
-            if(actual.b < noProperlyContained[k].a){
+        for(int k=0; k < noContained.size();k++){ // find the next that doesnt overlap with the i interval
+            if(actual.b < noContained[k].a){
                 next = k;
                 break;
             }
-            if(noProperlyContained[k].a > actual.a && !noProperlyContained[k].contained) toAdd++;
+            if(noContained[k].a > actual.a && !noContained[k].contained) toAdd++;
         }
-        flag = noProperlyContained[next].b;
-        for(int j=next;j<noProperlyContained.size();j++){
-            if(!noProperlyContained[j].contained) toAdd++;
-            if(noProperlyContained[j].a > noProperlyContained[i].b && noProperlyContained[j].a < flag && !noProperlyContained[j].contained){
+        flag = noContained[next].b;
+        for(int j=next;j<noContained.size();j++){
+            if(!noContained[j].contained) toAdd++;
+            if(noContained[j].a > noContained[i].b && noContained[j].a < flag && !noContained[j].contained){
                 dummy.vertex = toAdd;
-                //cout << " " << " ["<< noProperlyContained[i].a << "," <<noProperlyContained[i].b << "]" << " ["<< noProperlyContained[toAdd].a << "," << noProperlyContained[toAdd].b << "]"<< endl;
+                cout << " " << " ["<< noContained[i].a << "," <<noContained[i].b << "]" << " ["<< noContained[toAdd].a << "," << noContained[toAdd].b << "]"<< endl;
 
                 cdtGraph.adjacents[i].push_back(dummy);
             }
-            if(noProperlyContained[j].b<flag){
-                flag = noProperlyContained[j].b;
+            if(noContained[j].b<flag){
+                flag = noContained[j].b;
             }
         }
     }
+*/
 
     //inout graph step
     graph cdtGraph_inout;
 
     cdtGraph_inout.adjacents.push_back(emptyList); // add vertex 0 no-duplicated
     interval zero_interval;
-    zero_interval.a = noProperlyContained[0].a;
-    zero_interval.b = noProperlyContained[0].b;
+    zero_interval.a = noContained[0].a;
+    zero_interval.b = noContained[0].b;
     zero_interval.realIndex = 0;
     zero_interval.contained = false;
     INOUT_MAPPER.push_back(zero_interval);
 
-    for(int i=1;i<noProperlyContained.size() - 1;i++) { // add vertex from cdtGraph
+    for(int i=1;i<noContained.size() - 1;i++) { // add vertex from cdtGraph
         interval dummyInterval;
         link dummy;
         dummy.vertex = 2*i;
         dummy.length=0;
         dummy.type=TYPE_IDENTITY;
 
-        dummyInterval.a = noProperlyContained[i].a;
-        dummyInterval.b = noProperlyContained[i].b;
+        dummyInterval.a = noContained[i].a;
+        dummyInterval.b = noContained[i].b;
         dummyInterval.realIndex = i;
         dummyInterval.contained = false;
         INOUT_MAPPER.push_back(dummyInterval);
@@ -188,14 +247,14 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
     }
 
     interval n_1_interval;
-    n_1_interval.a = noProperlyContained[noProperlyContained.size() - 1].a;
-    n_1_interval.b = noProperlyContained[noProperlyContained.size() - 1].b;
-    n_1_interval.realIndex = noProperlyContained.size() - 1;
+    n_1_interval.a = noContained[noContained.size() - 1].a;
+    n_1_interval.b = noContained[noContained.size() - 1].b;
+    n_1_interval.realIndex = noContained.size() - 1;
     n_1_interval.contained = false;
     INOUT_MAPPER.push_back(n_1_interval);
     cdtGraph_inout.adjacents.push_back(emptyList); // add vertex n+1 no-duplicated
 
-   // for (int i = 1; i < noProperlyContained.size() - 1; ++i) {  // build 0 adjacents
+   // for (int i = 1; i < noContained.size() - 1; ++i) {  // build 0 adjacents
      //   link l;
        // l.vertex = 2*i;  // 0 -> iOut
        // l.length = 0;
@@ -238,7 +297,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noProperlyContained){
                 link l;
                 l.vertex = (it->vertex * 2) - 1;
                 l.length = 1;
-                l.type = 32;
+                l.type = it->type;
 
                 cdtGraph_inout.adjacents[2*i - 1].push_back(l); // JOut -> iIn
             }
@@ -282,7 +341,7 @@ void relajar (cdtVertex &u, cdtVertex &v,int w){
     }
 }
 
-vector<interval> shortestPathCdt (graph cdtGraph,vector<interval> noProperlyContained) {
+vector<interval> shortestPathCdt (graph cdtGraph,vector<interval> noContained) {
     //notice interval vector is alrready sorted
     initShortestPathVertexes(cdtGraph);
 
@@ -309,9 +368,9 @@ vector<interval> cdt (vector<interval> I) {
         }
     }
 
-    vector<interval> noProperlyContained = removeContainedIntervals(I);
-    graph cdtGraph = buildCdtGraph(I, noProperlyContained);
-    vector<interval> result = shortestPathCdt(cdtGraph, noProperlyContained);
+    vector<interval> noContained = removeContainedIntervals(I);
+    graph cdtGraph = buildCdtGraph(I, noContained);
+    vector<interval> result = shortestPathCdt(cdtGraph, noContained);
     return result;
 }
 
