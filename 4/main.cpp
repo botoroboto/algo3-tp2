@@ -6,6 +6,7 @@
 #include <tuple>
 #include <bits/stdc++.h>
 using namespace std;
+#define INF INT_MAX
 
 string path;
 int stream;
@@ -14,6 +15,135 @@ int TYPE_B = 0;
 int TYPE_C = 1;
 int TYPE_ZERO = 5;
 int TYPE_IDENTITY = 2;
+
+// Graph is represented using adjacency list. Every node
+// of adjacency list contains vertex number of the vertex
+// to which edge connects. It also
+// contains weight of the edge
+class AdjListNode
+{
+    int v;
+    int weight;
+public:
+    AdjListNode(int _v, int _w)  { v = _v;  weight = _w;}
+    int getV()       {  return v;  }
+    int getWeight()  {  return weight; }
+};
+
+// Class to represent a graph using adjacency
+// list representation
+class Graph
+{
+    int V;    // No. of vertices'
+
+    // Pointer to an array containing adjacency lists
+    list<AdjListNode> *adj;
+
+    // A function used by shortestPath
+    void topologicalSortUtil(int v, bool visited[], stack<int> &Stack);
+public:
+    Graph(int V);   // Constructor
+
+    // function to add an edge to graph
+    void addEdge(int u, int v, int weight);
+
+    // Finds shortest paths from given source vertex
+    vector<int> shortestPath(int s);
+};
+
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<AdjListNode>[V];
+}
+
+void Graph::addEdge(int u, int v, int weight)
+{
+    AdjListNode node(v, weight);
+    adj[u].push_back(node); // Add v to u's list
+}
+
+// A recursive function used by shortestPath.
+// See below link for details
+// https://www.geeksforgeeks.org/topological-sorting/
+void Graph::topologicalSortUtil(int v, bool visited[], stack<int> &Stack)
+{
+    // Mark the current node as visited
+    visited[v] = true;
+
+    // Recur for all the vertices adjacent to this vertex
+    list<AdjListNode>::iterator i;
+    for (i = adj[v].begin(); i != adj[v].end(); ++i)
+    {
+        AdjListNode node = *i;
+        if (!visited[node.getV()])
+            topologicalSortUtil(node.getV(), visited, Stack);
+    }
+
+    // Push current vertex to stack which stores topological sort
+    Stack.push(v);
+}
+
+// The function to find shortest paths from given vertex.
+// It uses recursive topologicalSortUtil() to get topological
+// sorting of given graph.
+vector<int> Graph::shortestPath(int s)
+{
+    stack<int> Stack;
+    int dist[V];
+    int parent[V];
+
+    // Mark all the vertices as not visited
+    bool *visited = new bool[V];
+    for (int i = 0; i < V; i++)
+        visited[i] = false;
+
+    // Call the recursive helper function to store
+    // Topological Sort starting from all vertices
+    // one by one
+    for (int i = 0; i < V; i++)
+        if (visited[i] == false)
+            topologicalSortUtil(i, visited, Stack);
+
+    // Initialize distances to all vertices as
+    // infinite and distance to source as 0
+    for (int i = 0; i < V; i++)
+        dist[i] = INF;
+    dist[s] = 0;
+
+    // Process vertices in topological order
+    while (Stack.empty() == false)
+    {
+        // Get the next vertex from topological order
+        int u = Stack.top();
+        Stack.pop();
+
+        // Update distances of all adjacent vertices
+        list<AdjListNode>::iterator i;
+        if (dist[u] != INF)
+        {
+            for (i = adj[u].begin(); i != adj[u].end(); ++i)
+                if (dist[i->getV()] > dist[u] + i->getWeight()) {
+                    dist[i->getV()] = dist[u] + i->getWeight();
+                    parent[i->getV()] = u;
+                }
+
+        }
+    }
+
+    // Print the calculated shortest distances
+    int i = V-1;
+    vector<int> path = {};
+    while(i>0) {
+        cout << parent[i] << " | ";
+        path.push_back(parent[i]);
+        i = parent[i];
+    }
+
+    cout << endl;
+
+    return path;
+}
 
 struct link {
     int vertex, type, length;
@@ -263,6 +393,8 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
     //    cdtGraph_inout.adjacents[0].push_back(l);
     // }
 
+    Graph g(cdtGraph_inout.adjacents.size());
+
     vector<interval> pr = INOUT_MAPPER;
     for (int i = 0; i < cdtGraph.adjacents.size(); ++i) {
         for (auto it = cdtGraph.adjacents[i].begin(); it != cdtGraph.adjacents[i].end(); ++it){
@@ -275,6 +407,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 l.length = it->length;
                 l.type = type;
 
+                g.addEdge(vertex_out, vertex_in, it->length);
                 cdtGraph_inout.adjacents[vertex_out].push_back(l); // iOut -> jIn
             }
 
@@ -287,6 +420,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 l.length = it->length;
                 l.type = it->type;
 
+                g.addEdge(vertex_in, vertex_out, it->length);
                 cdtGraph_inout.adjacents[vertex_in].push_back(l); // Iin -> Jout
             }
 
@@ -299,6 +433,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 l.length = 1;
                 l.type = it->type;
 
+                g.addEdge(2*i - 1, (it->vertex * 2) - 1, 1);
                 cdtGraph_inout.adjacents[2*i - 1].push_back(l); // JOut -> iIn
             }
 
@@ -309,15 +444,26 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 l.length = 0;
                 l.type = TYPE_ZERO;
 
+                g.addEdge(0, (it->vertex * 2), 0);
                 cdtGraph_inout.adjacents[0].push_back(l); // O -> IOut
             }
         }
     }
 
+
+    /*
     for (int j = 0; j < cdtGraph_inout.adjacents.size(); j+=1) {
         for (std::list<link>::iterator it = cdtGraph_inout.adjacents[j].begin(); it != cdtGraph_inout.adjacents[j].end(); ++it) {
             cout << it->type << " " << " ["<< INOUT_MAPPER[j].a << "," <<INOUT_MAPPER[j].b << "]" << " ["<< INOUT_MAPPER[it->vertex].a << "," <<INOUT_MAPPER[it->vertex].b << "]"<< endl;
         }
+    }
+     */
+
+    vector<int> path = g.shortestPath(0);
+    cout << path.size() - 1 << endl;
+
+    for (int i = 0; i < path.size(); ++i) {
+        cout << INOUT_MAPPER[path[i]].a << "," << INOUT_MAPPER[path[i]].b << endl;
     }
 
     return cdtGraph_inout;
@@ -388,12 +534,6 @@ int main() {
     }
 
     vector<interval> result = cdt(I);
-
-    cout << result.size() << endl;
-
-    for (int i = 0; i < result.size(); ++i) {
-        cout << result[i].a << "," << result[i].b << endl;
-    }
 
     cout << endl;
 
