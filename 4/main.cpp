@@ -182,11 +182,12 @@ int n,a,b;
 vector<interval> I;
 vector<interval> INOUT_MAPPER = {};
 
+// remueve los intervalos contenidos
+// O(n^2) pues por cada n recorre todos los n verificando cual está contenido
 vector<interval> removeContainedIntervals(vector<interval> &I){
     vector<interval> retval;
 
     //add I0
-
     int min = I[0].a;
     int max = I[0].b;
     for (int i = 0; i < I.size(); ++i) {
@@ -194,7 +195,6 @@ vector<interval> removeContainedIntervals(vector<interval> &I){
            max = I[i].b;
         }
     }
-
 
     interval I0, In;
     I0.b = min - 1;
@@ -217,6 +217,7 @@ vector<interval> removeContainedIntervals(vector<interval> &I){
                 break;
             }
         }
+
         if(!contained){
             retval.push_back(I[j]);
         }
@@ -227,33 +228,53 @@ vector<interval> removeContainedIntervals(vector<interval> &I){
     return retval;
 }
 
-graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
-    graph cdtGraph;
-
-    //fill the graph with vertex
-    list<link> emptyList;
-    for(int i=0;i<noContained.size();i++){
-        cdtGraph.adjacents.push_back(emptyList); //add vertex of the noContained interval
-    }
-
-    // aristas tipo B
+void crearAristasB(graph &cdtGraph, vector<interval> &noContained) {
     for (int i = 0; i < noContained.size(); ++i) {
         for (int j = i; j < noContained.size() ; ++j) {
             if(
-            j!=i && noContained[i].a < noContained[j].a &&
-                noContained[i].b > noContained[j].a &&
-                noContained[i].b < noContained[j].b
-            ) {
+                    j!=i && noContained[i].a < noContained[j].a &&
+                    noContained[i].b > noContained[j].a &&
+                    noContained[i].b < noContained[j].b
+                    ) {
                 link dummy;
                 dummy.vertex = j;
                 dummy.length= 1;
                 dummy.type= TYPE_B;
-                // cout << " " << " ["<< noContained[i].a << "," <<noContained[i].b << "]" << " ["<< noContained[j].a << "," << noContained[j].b << "]"<< endl;
 
                 cdtGraph.adjacents[i].push_back(dummy);
             }
         }
     }
+}
+
+Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
+    graph cdtGraph;
+
+    // coloca una lista vacia por cada nodo
+    list<link> emptyList;
+    for(int i=0;i<noContained.size();i++){
+        cdtGraph.adjacents.push_back(emptyList); //add vertex of the noContained interval
+    }
+
+//    // aristas tipo B
+//    for (int i = 0; i < noContained.size(); ++i) {
+//        for (int j = i; j < noContained.size() ; ++j) {
+//            if(
+//            j!=i && noContained[i].a < noContained[j].a &&
+//                noContained[i].b > noContained[j].a &&
+//                noContained[i].b < noContained[j].b
+//            ) {
+//                link dummy;
+//                dummy.vertex = j;
+//                dummy.length= 1;
+//                dummy.type= TYPE_B;
+//
+//                cdtGraph.adjacents[i].push_back(dummy);
+//            }
+//        }
+//    }
+
+    crearAristasB(cdtGraph, noContained);
 
     interval emptyInterval;
     emptyInterval.a = -1000;
@@ -312,40 +333,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
         }
     }
 
-/*
-    //aristas tipo c
-    int flag;
-    for(int i=0;i < noContained.size();i++){
-        link dummy;
-        dummy.vertex=0;
-        dummy.length=1;
-        dummy.type=TYPE_C;
-        interval actual = noContained[i];
-        int next;
-        int toAdd = i;
-        for(int k=0; k < noContained.size();k++){ // find the next that doesnt overlap with the i interval
-            if(actual.b < noContained[k].a){
-                next = k;
-                break;
-            }
-            if(noContained[k].a > actual.a && !noContained[k].contained) toAdd++;
-        }
-        flag = noContained[next].b;
-        for(int j=next;j<noContained.size();j++){
-            if(!noContained[j].contained) toAdd++;
-            if(noContained[j].a > noContained[i].b && noContained[j].a < flag && !noContained[j].contained){
-                dummy.vertex = toAdd;
-                cout << " " << " ["<< noContained[i].a << "," <<noContained[i].b << "]" << " ["<< noContained[toAdd].a << "," << noContained[toAdd].b << "]"<< endl;
-
-                cdtGraph.adjacents[i].push_back(dummy);
-            }
-            if(noContained[j].b<flag){
-                flag = noContained[j].b;
-            }
-        }
-    }
-*/
-
     //inout graph step
     graph cdtGraph_inout;
 
@@ -384,19 +371,14 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
     INOUT_MAPPER.push_back(n_1_interval);
     cdtGraph_inout.adjacents.push_back(emptyList); // add vertex n+1 no-duplicated
 
-   // for (int i = 1; i < noContained.size() - 1; ++i) {  // build 0 adjacents
-     //   link l;
-       // l.vertex = 2*i;  // 0 -> iOut
-       // l.length = 0;
-       // l.type = TYPE_ZERO;
-
-    //    cdtGraph_inout.adjacents[0].push_back(l);
-    // }
-
     Graph g(cdtGraph_inout.adjacents.size());
 
     vector<interval> pr = INOUT_MAPPER;
     for (int i = 0; i < cdtGraph.adjacents.size(); ++i) {
+        if(i >0 && i!= cdtGraph.adjacents.size()-1) {
+            g.addEdge(2*i -1, 2*i, 0);
+        }
+
         for (auto it = cdtGraph.adjacents[i].begin(); it != cdtGraph.adjacents[i].end(); ++it){
             int vertex_out = 2*i;
             int vertex_in = (it->vertex * 2) - 1;
@@ -411,7 +393,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 cdtGraph_inout.adjacents[vertex_out].push_back(l); // iOut -> jIn
             }
 
-            // i -> j  swap to j -> i
+            // Iin -> Jout
             vertex_out = (2*it->vertex);
             vertex_in = (i*2) - 1;
             if (type == TYPE_C && i!=0 && (vertex_out-1 != INOUT_MAPPER.size() - 1)) {
@@ -421,7 +403,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
                 l.type = it->type;
 
                 g.addEdge(vertex_in, vertex_out, it->length);
-                cdtGraph_inout.adjacents[vertex_in].push_back(l); // Iin -> Jout
+                cdtGraph_inout.adjacents[vertex_in].push_back(l);
             }
 
 
@@ -450,15 +432,6 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
         }
     }
 
-
-    /*
-    for (int j = 0; j < cdtGraph_inout.adjacents.size(); j+=1) {
-        for (std::list<link>::iterator it = cdtGraph_inout.adjacents[j].begin(); it != cdtGraph_inout.adjacents[j].end(); ++it) {
-            cout << it->type << " " << " ["<< INOUT_MAPPER[j].a << "," <<INOUT_MAPPER[j].b << "]" << " ["<< INOUT_MAPPER[it->vertex].a << "," <<INOUT_MAPPER[it->vertex].b << "]"<< endl;
-        }
-    }
-     */
-
     vector<int> path = g.shortestPath(0);
     cout << path.size() - 1 << endl;
 
@@ -466,7 +439,7 @@ graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
         cout << INOUT_MAPPER[path[i]].a << "," << INOUT_MAPPER[path[i]].b << endl;
     }
 
-    return cdtGraph_inout;
+    return g;
 }
 
 void initShortestPathVertexes(graph &cdtGraph){
@@ -487,40 +460,11 @@ void relajar (cdtVertex &u, cdtVertex &v,int w){
     }
 }
 
-vector<interval> shortestPathCdt (graph cdtGraph,vector<interval> noContained) {
-    //notice interval vector is alrready sorted
-    initShortestPathVertexes(cdtGraph);
-
-    for (int i=0;i<cdtGraph.adjacents.size();i++){
-        for(link l : cdtGraph.adjacents[i]){
-            relajar(cdtGraph.vertexes[i],cdtGraph.vertexes[l.vertex], l.length);
-        }
-    }
-    vector<interval> result;
-    int i = cdtGraph.vertexes.size()-1;
-    while(i>0){
-        i = cdtGraph.vertexes[i].pi;
-        result.push_back(INOUT_MAPPER[i]);
-    }
-    return result;
-}
-
-vector<interval> cdt (vector<interval> I) {
-    for(int i=0;i<I.size();i++){  //sort I by the first component of each interval
-        for(int j=0;j<I.size();j++){
-            if(I[j].a<I[i].a && j>i){
-                swap(I[j],I[i]);
-            }
-        }
-    }
-
+Graph cdt (vector<interval> I) {
     vector<interval> noContained = removeContainedIntervals(I);
-    graph cdtGraph = buildCdtGraph(I, noContained);
-    vector<interval> result = shortestPathCdt(cdtGraph, noContained);
-    return result;
+    Graph cdtGraph = buildCdtGraph(I, noContained);
+    return cdtGraph;
 }
-
-
 
 int main() {
     cin >> n;
@@ -533,7 +477,7 @@ int main() {
         I.push_back(dummy);
     }
 
-    vector<interval> result = cdt(I);
+    Graph result = cdt(I);
 
     cout << endl;
 
