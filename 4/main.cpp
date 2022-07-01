@@ -289,14 +289,15 @@ Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
     crearAristasB(cdtGraph, noContained);  // O(n)
     crearAristasC(cdtGraph, noContained);
 
-    interval zero_interval;
+    interval zero_interval;   // el intervalo 0 no se duplica
     zero_interval.a = noContained[0].a;
     zero_interval.b = noContained[0].b;
     zero_interval.realIndex = 0;
     zero_interval.contained = false;
     INOUT_MAPPER.push_back(zero_interval);
 
-    for(int i=1;i<noContained.size() - 1;i++) { // add vertex from cdtGraph
+    // arma el vector INOUT_MAPPER que va a servir para luego identificar a que elemento pertenece cada elemento del grafo inout que va a duplicar las aristas
+    for(int i=1;i<noContained.size() - 1;i++) {
         interval dummyInterval;
 
         dummyInterval.a = noContained[i].a;
@@ -307,7 +308,7 @@ Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
         INOUT_MAPPER.push_back(dummyInterval);
     }
 
-    interval n_1_interval;
+    interval n_1_interval;  // el intervalo n+1 no se duplica
     n_1_interval.a = noContained[noContained.size() - 1].a;
     n_1_interval.b = noContained[noContained.size() - 1].b;
     n_1_interval.realIndex = noContained.size() - 1;
@@ -316,21 +317,24 @@ Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
 
     Graph g(((noContained.size() - 2) * 2) + 2);
 
+
+    // empieza a construir el grafo inout
     for (int i = 0; i < cdtGraph.adjacents.size(); ++i) {
         if(i >0 && i!= cdtGraph.adjacents.size()-1) {
-            g.addEdge(2*i -1, 2*i, 0);
+            g.addEdge(2*i -1, 2*i, 0);  // iIn -> iOut
         }
 
-        // iOut -> jIn
         for (auto it = cdtGraph.adjacents[i].begin(); it != cdtGraph.adjacents[i].end(); ++it){
             int vertex_out = 2*i;
             int vertex_in = (it->vertex * 2) - 1;
             int type = it->type;
+
+            // iOut -> jIn las aristas de tipo b
             if (type == TYPE_B && i!=0 && (vertex_in!=INOUT_MAPPER.size() - 1)) {
                 g.addEdge(vertex_out, vertex_in, it->length);
             }
 
-            // Iin -> Jout
+            // Iin -> Jout las aristas de tipo c
             vertex_out = (2*it->vertex);
             vertex_in = (i*2) - 1;
             if (type == TYPE_C && i!=0 && (vertex_out-1 != INOUT_MAPPER.size() - 1)) {
@@ -338,13 +342,13 @@ Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
             }
 
 
-            // si llega a n+1
+            // si llega a n+1 colocamos la arista iIn -> N+1
             bool isN_1_link = (type == TYPE_C || type == TYPE_B) && ((it->vertex * 2) - 1 == INOUT_MAPPER.size() - 1);
             if (isN_1_link && i!=0) {
                 g.addEdge(2*i - 1, (it->vertex * 2) - 1, 1);
             }
 
-            // si sale de 0
+            // si sale de 0 va al out
             if (i==0) {
                 g.addEdge(0, (it->vertex * 2), 0);
             }
@@ -358,7 +362,6 @@ Graph buildCdtGraph (vector<interval> I,vector<interval> noContained){
 void cdt (vector<interval> I) {
     vector<interval> noContained = removeContainedIntervals(I);
     vector<interval> res = {};
-
 
     if(noContained.size() ==3) { // caso que hay un intervalo que contiene a todos (es igual a 3 porque siempre pushea I_0 y I_n+1)
         interval contenedor = noContained[1];
